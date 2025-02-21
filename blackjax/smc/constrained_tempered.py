@@ -53,7 +53,8 @@ def build_kernel(
 
     where :math:`p_0` is the prior distribution, typically easy to sample from
     and for which the density is easy to compute, and :math:`\\mathbb{I}_{\mathcal{S}}(x)` is
-    the indicator function over a subset :math:`\\mathcal{S}`.
+    the indicator function over a subset :math:`\\mathcal{S}` that correspond to constraints 
+    we wish to enforce.
 
     Parameters
     ----------
@@ -69,6 +70,8 @@ def build_kernel(
         log-probability density function.
     resampling_fn
         A random function that resamples generated particles based of weights
+    constraint_fn
+        A function that computes the (inequality) constraints
     num_mcmc_iterations
         Number of iterations in the MCMC chain.
 
