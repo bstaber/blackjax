@@ -31,7 +31,7 @@ def init(particles: ArrayLikeTree):
     # the first leaf of the inputted PyTree.
     num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
     weights = jnp.ones(num_particles) / num_particles
-    return TemperedSMCState(particles, weights, 1e-3)
+    return TemperedSMCState(particles, weights, 1e5)
 
 
 def build_kernel(
@@ -49,12 +49,11 @@ def build_kernel(
     Constrained Tempered SMC uses tempering to sample from a distribution given by
 
     .. math::
-        p(x) \\propto p_0(x) \\times \\mathbb{I}_{\mathcal{S}}(x) \\mathrm{d}x
+        p(x) \\propto p_0(x) \\times I_S(x) dx
 
     where :math:`p_0` is the prior distribution, typically easy to sample from
-    and for which the density is easy to compute, and :math:`\\mathbb{I}_{\mathcal{S}}(x)` is
-    the indicator function over a subset :math:`\\mathcal{S}` that correspond to constraints 
-    we wish to enforce.
+    and for which the density is easy to compute, and :math:`I_S(x)` is
+    the indicator function over a subset :math:`S`.
 
     Parameters
     ----------
@@ -122,9 +121,9 @@ def build_kernel(
 
         def log_weights_fn(position: ArrayLikeTree) -> float:
             constraint_values = constraint_fn(position)
-            current_loglikelihood = loglikelihood_fn(constraint_values / lmbda)
-            previous_loglikelihood = loglikelihood_fn(constraint_values / state.lmbda)
-            return current_loglikelihood - previous_loglikelihood
+            constraint1 = loglikelihood_fn(constraint_values / lmbda)
+            constraint2 = loglikelihood_fn(constraint_values / state.lmbda)
+            return constraint1 - constraint2
 
         def tempered_logposterior_fn(position: ArrayLikeTree) -> float:
             logprior = logprior_fn(position)

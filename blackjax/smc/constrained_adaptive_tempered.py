@@ -73,9 +73,10 @@ def build_kernel(
     """
 
     logdensity_fn = jax.vmap(loglikelihood_fn)
+    constraint_particles_fn = jax.vmap(constraint_fn)
 
     def ess_fn(nu: float, nu_previous: float, weights: Array, particles: ArrayTree):
-        constraint_values = constraint_fn(particles)
+        constraint_values = constraint_particles_fn(particles)
         current_loglikelihood = logdensity_fn(constraint_values / nu)
         previous_loglikelihood = logdensity_fn(constraint_values / nu_previous)
         log_weights = current_loglikelihood - previous_loglikelihood
@@ -83,7 +84,7 @@ def build_kernel(
         new_log_weights = jnp.log(weights) + log_weights
         logsum_weights = jax.scipy.special.logsumexp(new_log_weights)
         new_weights = jnp.exp(new_log_weights - logsum_weights)
-        ess_val = 1 / jnp.sum(new_weights**2)
+        ess_val = 1.0 / jnp.sum(new_weights**2)
         return ess_val - target_ess
 
     def compute_lmbda(
@@ -95,7 +96,7 @@ def build_kernel(
 
         fun_to_solve = jax.tree_util.Partial(
             ess_fn,
-            nu_previous=state.lmbda,
+            nu_previous=lmbda,
             weights=weights,
             particles=particles,
         )
